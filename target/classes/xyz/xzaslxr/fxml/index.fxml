@@ -9,7 +9,6 @@
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.VBox?>
 
-<?import javafx.scene.control.TreeItem?>
 <VBox maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="600.0" prefWidth="800.0" style="-fx-background-color: #ffffff#ffffff;" xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1" fx:controller="xyz.xzaslxr.fxml.controller.IndexController">
    <children>
       <VBox alignment="TOP_CENTER" prefHeight="120.0" prefWidth="800.0" style="-fx-background-color: #afafaf;">
@@ -26,28 +25,14 @@
       </VBox>
       <TableView fx:id="tableView" prefHeight="250.0" prefWidth="800.0">
         <columns>
-            <TableColumn fx:id="id" prefWidth="80.0" text="id" />
-            <TableColumn fx:id="time" prefWidth="144.0" text="time" />
-            <TableColumn fx:id="src" prefWidth="144.0" text="src" />
-            <TableColumn fx:id="dst" prefWidth="144.0" text="dst" />
-            <TableColumn fx:id="protocol" prefWidth="144.0" text="protocol" />
-            <TableColumn fx:id="length" prefWidth="144.0" text="length" />
+            <TableColumn fx:id="id" prefWidth="60.0" text="id" />
+            <TableColumn fx:id="time" prefWidth="148.0" text="time" />
+            <TableColumn fx:id="src" prefWidth="148.0" text="src" />
+            <TableColumn fx:id="dst" prefWidth="148.0" text="dst" />
+            <TableColumn fx:id="protocol" prefWidth="148.0" text="protocol" />
+            <TableColumn fx:id="length" prefWidth="148.0" text="length" />
         </columns>
       </TableView>
-
-      <TreeView id="treeView" prefHeight="233.0" prefWidth="800.0" >
-          <TreeItem value = "treeRoot" expanded="true">
-              <children>
-                  <TreeItem value="firstChild" />
-                  <TreeItem value = "treeRoot" expanded="true">
-                      <children>
-                          <TreeItem value="firstChild" />
-                          <TreeItem value="secondChild" />
-                      </children>
-                  </TreeItem>
-              </children>
-          </TreeItem>
-      </TreeView>
-
+      <TreeView fx:id="treeView" prefHeight="230.0" prefWidth="800.0" />
    </children>
 </VBox>

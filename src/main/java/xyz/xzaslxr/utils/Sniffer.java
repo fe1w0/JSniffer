@@ -30,7 +30,9 @@ public class Sniffer {
         PacketListener packetListener = new PacketListener() {
             @Override
             public void gotPacket(Packet packet) {
-                gotPackets.add(new PacketModel(handle.getTimestamp(), PCAP_COUNTER++, packet));
+                if (packet != null) {
+                    gotPackets.add(new PacketModel(handle.getTimestamp(), PCAP_COUNTER++, packet));
+                }
                 // // Debug
                 // System.out.println("Packets Length: " + gotPackets.size());
                 // System.out.println(packet);
