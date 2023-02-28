@@ -25,7 +25,7 @@ public class JSniffer extends Application {
         // 设置舞台的场景
         stage.setScene(scene);
         // 不允许 舞台尺寸被变化
-        stage.setResizable(false);
+        stage.setResizable(true);
         // 展示舞台
         stage.show();
     }
