@@ -1,28 +1,24 @@
 package xyz.xzaslxr.utils;
 
+import javafx.beans.property.SimpleIntegerProperty;
 import javafx.beans.property.SimpleStringProperty;
 import org.pcap4j.packet.IpV4Packet;
 import org.pcap4j.packet.IpV6Packet;
 import org.pcap4j.packet.Packet;
 
 import java.sql.Timestamp;
+import java.util.Comparator;
 
 public class PacketModel {
-    /*
-        <TableColumn prefWidth="80.0" text="id" />
-        <TableColumn prefWidth="144.0" text="time" />
-        <TableColumn prefWidth="144.0" text="src" />
-        <TableColumn prefWidth="144.0" text="dst" />
-        <TableColumn prefWidth="144.0" text="protocol" />
-        <TableColumn prefWidth="144.0" text="length" />
-     */
 
-    private final SimpleStringProperty id;
+
+
+    private final SimpleIntegerProperty id;
     private final SimpleStringProperty time;
     private final SimpleStringProperty src;
     private final SimpleStringProperty dst;
     private final SimpleStringProperty protocol;
-    private final SimpleStringProperty length;
+    private final SimpleIntegerProperty length;
 
     // 便于 解析
     private final Packet itemPacket;
@@ -30,34 +26,34 @@ public class PacketModel {
     public PacketModel(Timestamp time, Short id , Packet packet) {
         if ( packet.get(IpV4Packet.class) != null) {
             IpV4Packet ipPacket = packet.get(IpV4Packet.class);
-            this.id = new SimpleStringProperty(String.valueOf(id));
+            this.id = new SimpleIntegerProperty(id);
             this.time = new SimpleStringProperty(time.toString());
             this.src = new SimpleStringProperty(ipPacket.getHeader().getSrcAddr().getHostAddress());
             this.dst = new SimpleStringProperty(ipPacket.getHeader().getDstAddr().getHostAddress());
             this.protocol = new SimpleStringProperty(ipPacket.getHeader().getProtocol().toString());
-            this.length = new SimpleStringProperty(String.valueOf(ipPacket.length()));
+            this.length = new SimpleIntegerProperty(ipPacket.length());
             // } else if (packet instanceof IpV6Packet) {
         } else {
             IpV6Packet ipPacket =  packet.get(IpV6Packet.class);
-            this.id = new SimpleStringProperty(String.valueOf(id));
+            this.id = new SimpleIntegerProperty(id);
             this.time = new SimpleStringProperty(time.toString());
             this.src = new SimpleStringProperty(ipPacket.getHeader().getSrcAddr().getHostAddress());
             this.dst = new SimpleStringProperty(ipPacket.getHeader().getDstAddr().getHostAddress());
             this.protocol = new SimpleStringProperty(ipPacket.getHeader().getProtocol().toString());
-            this.length = new SimpleStringProperty(String.valueOf(ipPacket.length()));
+            this.length = new SimpleIntegerProperty(ipPacket.length());
         }
         this.itemPacket = packet;
     }
 
-    public String getId() {
+    public int getId() {
         return this.id.get();
     }
 
-    public void setId(String id) {
+    public void setId(int id) {
         this.id.set(id);
     }
 
-    public SimpleStringProperty idProperty() {
+    public SimpleIntegerProperty idProperty() {
         return this.id;
     }
 
@@ -109,15 +105,15 @@ public class PacketModel {
         return protocol;
     }
 
-    public String getLength() {
+    public int getLength() {
             return this.length.get();
         }
 
-    public void setLength(String length) {
+    public void setLength(int length) {
         this.length.set(length);
     }
 
-    public SimpleStringProperty lengthProperty() {
+    public SimpleIntegerProperty lengthProperty() {
         return length;
     }
 
@@ -136,4 +132,20 @@ public class PacketModel {
             return false;
         }
     }
+
+    public static class IdCompare implements Comparator<Integer> {
+        @Override
+        public int compare(Integer o1, Integer o2) {
+            return o1.compareTo(o2);
+        }
+    }
+
+    public static class LengthCompare implements Comparator<Integer> {
+        @Override
+        public int compare(Integer o1, Integer o2) {
+            return o1.compareTo(o2);
+        }
+    }
+
+
 }

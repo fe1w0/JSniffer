@@ -1,14 +1,11 @@
 package xyz.xzaslxr.fxml.controller;
 
-import com.sun.source.tree.Tree;
-import javafx.application.Platform;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
+import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
 import javafx.concurrent.Task;
-import javafx.event.ActionEvent;
-import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.geometry.Pos;
@@ -27,7 +24,7 @@ import java.util.stream.Collectors;
 
 import static xyz.xzaslxr.utils.Sniffer.*;
 
-public class IndexController implements Initializable {
+public class Controller implements Initializable {
 
     // ComboBox 列出所有网卡
     @FXML private ComboBox interfacesComboBox;
@@ -60,6 +57,16 @@ public class IndexController implements Initializable {
     // 输入的 TextField
     private String textFieldInput = "";
 
+    // false 表示当前表格数据为gotPackets,
+    // true 表示当前表格为 filter 后的数据.
+    public boolean isFilter = false;
+
+
+    // snifferState 用于记录和表示App的状态，
+    // true 表示运行
+    // false 表示已经终止
+    public boolean snifferState = false;
+
     private List<PcapNetworkInterface> localInterfaces;
 
     private int selectedInterfaceIndex;
@@ -75,9 +82,8 @@ public class IndexController implements Initializable {
         try {
             setUpInterfacesComboBox();
             setUpTableView();
-            refreshTable();
             setUpTextField();
-
+            // refreshTable();
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -92,8 +98,8 @@ public class IndexController implements Initializable {
     }
 
     public Map<String, LinkedList<String>> getTreeItem(Packet packetData) throws Exception {
-        // 看完源代码，我直接放弃找Packet类，一个个分析，感觉内部只有直接输出的功能，烦
-        // Version 1 先讲
+        // 思路： 直接将所有的输出按行分割
+        // 再判断 ParentNode 和 ChildNode
         String packetString = packetData.toString();
 
         // Arrays.stream(packetString.split("\n"))会将字符串按行分割，并将每行的字符串转换为一个Stream对象。
@@ -136,6 +142,7 @@ public class IndexController implements Initializable {
     }
 
 
+    // 展开Packet，并修改treeView
     public void expandPacket(Packet packet) throws Exception {
         Map<String, LinkedList<String>> parsedData = getTreeItem(packet);
         LinkedList<TreeItem<String>> treeList = getTree(parsedData);
@@ -147,20 +154,22 @@ public class IndexController implements Initializable {
         treeView.setShowRoot(false);
     }
 
-    public void refreshTable() throws Exception {
-        Timer timer = new Timer();
-        timer.schedule(new TimerTask() {
-            public void run() {
-                Platform.runLater(new Runnable() {
-                    @Override
-                    public void run() {
-                        ObservableList<PacketModel> packetsTable = FXCollections.observableArrayList(gotPackets);
-                        tableView.getItems().setAll(packetsTable);
-                    }
+    public void listenGotPackets() throws Exception {
+        // 添加 List 监听器
+        if ( !isFilter) {
+            refreshTable(gotPackets);
+        } else {
+            CopyOnWriteArrayList<PacketModel> packets = getFilterPacketList(runningHandle, textFieldInput, gotPackets);
+            refreshTable(packets);
+        }
+    }
 
-                });
-            }
-        }, 1000, 1000);
+    // 最头疼的地方
+    // 想换成callback
+    public void refreshTable(CopyOnWriteArrayList<PacketModel> packets) throws Exception {
+        // 根据传入的 packets 刷新
+        ObservableList<PacketModel> packetsTable = FXCollections.observableArrayList(packets);
+        tableView.getItems().setAll(packetsTable);
     }
 
 
@@ -168,22 +177,27 @@ public class IndexController implements Initializable {
         tablecolumn.setStyle(style);
     }
 
+    public void setCellValueFactory(TableColumn tablecolumn, PropertyValueFactory propertyValueFactory) {
+        tablecolumn.setCellValueFactory(propertyValueFactory);
+    }
+
     public void setUpTableView() throws Exception {
-        id.setCellValueFactory(new PropertyValueFactory<>("id"));
-        time.setCellValueFactory(new PropertyValueFactory<>("time"));
-        src.setCellValueFactory(new PropertyValueFactory<>("src"));
-        dst.setCellValueFactory(new PropertyValueFactory<>("dst"));
-        protocol.setCellValueFactory(new PropertyValueFactory<>("protocol"));
-        length.setCellValueFactory(new PropertyValueFactory<>("length"));
+        // 设置 setCellValueFactory
+        for(Object column : tableView.getColumns()) {
+            setCellValueFactory((TableColumn) column, new PropertyValueFactory<>( ((TableColumn) column).getId()) );
+        }
 
         // 设置居中
         for(Object column : tableView.getColumns()) {
+            ((TableColumn) column).setSortable(true);
             setStyle((TableColumn) column, "-fx-alignment: CENTER;");
         }
 
-        // Setup the view of treeView
-        ObservableList<PacketModel> packetsTable = FXCollections.observableArrayList(gotPackets);
-        tableView.getItems().setAll(packetsTable);
+        // 设置 compare
+        id.setComparator(new PacketModel.IdCompare());
+        length.setComparator(new PacketModel.LengthCompare());
+        id.setSortType(TableColumn.SortType.ASCENDING);
+        length.setSortType(TableColumn.SortType.ASCENDING);
 
         tableView.getSelectionModel().selectedItemProperty().addListener((obs, oldSelection, newSelection) -> {
              if (oldSelectedPacket != null && newSelection != null && !oldSelectedPacket.compare((PacketModel) newSelection)) {
@@ -205,6 +219,10 @@ public class IndexController implements Initializable {
         });
     }
 
+    /*
+        在下拉框中添加所有网卡信息，
+        并设置 startSniffer 和 endSniffer 的按钮操作
+     */
     public void setUpInterfacesComboBox() throws Exception {
         localInterfaces =  Pcaps.findAllDevs();
         // 将 localInterfaces 转为 JavaFX 可识别的对象。
@@ -214,36 +232,56 @@ public class IndexController implements Initializable {
         // 设置 interfacesComboBox 默认选择 第1项
         interfacesComboBox.getSelectionModel().select(0);
 
-        startSniffer.setOnAction(new EventHandler<ActionEvent>() {
-            @Override
-            public void handle(ActionEvent event) {
+        startSniffer.setOnAction(event -> {
+            try {
+                // 必须得开一个 javafx Task，避免线程卡死，UI也卡死
                 Task<Void> task = new Task<Void>() {
                     @Override
                     protected Void call() throws Exception {
                         // 清空 gotPackets
                         gotPackets.clear();
-                        // 清空 TableView
+                        // 重置 snifferState
+                        snifferState = true;
+                        // 重置 isFilter
+                        isFilter = false;
+                        // 重置 TableView
                         ObservableList<PacketModel> packetsTable = FXCollections.observableArrayList(gotPackets);
                         tableView.getItems().setAll(packetsTable);
+                        // 添加 packetsTable 的监听器
+                        packetsTable.addListener(new ListChangeListener<PacketModel>() {
+                            @Override
+                            public void onChanged(Change<? extends PacketModel> c) {
+                                try {
+                                    listenGotPackets();
+                                } catch (Exception e) {
+                                    throw new RuntimeException(e);
+                                }
+                            }
+                        });
 
+                        // 根据下拉框中的下标，创建pcapHandler
                         selectedInterfaceIndex = interfacesComboBox.getSelectionModel().getSelectedIndex();
                         runningHandle = getPcapHandler(localInterfaces.get(selectedInterfaceIndex));
                         try {
-                            runSniffer(runningHandle, gotPackets);
+                            // 开始启动监听模块
+                            runSniffer(runningHandle, gotPackets, packetsTable);
                         } catch (Exception e) {
-                            System.out.println("[!] Error: startSniffer");
+                            System.out.println("[!] Error: startSniffer.runSniffer");
                             throw new RuntimeException(e);
                         }
                         return null;
                     }
                 };
                 new Thread(task).start();
+            } catch (Exception e) {
+                System.out.println("[!] Error: startSniffer.setOnAction");
             }
         });
 
         // 设置 endSniffer
         endSniffer.setOnAction(event -> {
             try {
+                snifferState = false;
                 runningHandle.breakLoop();
                 zeroCounter();
             } catch (Exception e) {
@@ -270,13 +308,17 @@ public class IndexController implements Initializable {
 
         handleField.setOnAction(event -> {
             try {
-                getFilterPacketList(runningHandle, textFieldInput, gotPackets);
+                isFilter = true;
+
+                // 添加暂停时，对 TableView的刷新
+                if (!snifferState) {
+                    // 手动监听
+                    listenGotPackets();
+                }
             } catch (Exception e) {
                 System.out.println("[!] Error: handleField");
                 e.printStackTrace();
             }
         });
-
-
     }
 }
