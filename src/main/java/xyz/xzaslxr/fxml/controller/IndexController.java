@@ -2,6 +2,8 @@ package xyz.xzaslxr.fxml.controller;
 
 import com.sun.source.tree.Tree;
 import javafx.application.Platform;
+import javafx.beans.value.ChangeListener;
+import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.concurrent.Task;
@@ -9,6 +11,7 @@ import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
+import javafx.geometry.Pos;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
 import org.pcap4j.core.PcapHandle;
@@ -19,6 +22,7 @@ import xyz.xzaslxr.utils.PacketModel;
 
 import java.net.URL;
 import java.util.*;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.stream.Collectors;
 
 import static xyz.xzaslxr.utils.Sniffer.*;
@@ -48,11 +52,19 @@ public class IndexController implements Initializable {
 
     @FXML private TreeView treeView = new TreeView();
 
+    @FXML private TextField textField = new TextField();
+
+    @FXML private Button handleField = new Button();
+
+
+    // 输入的 TextField
+    private String textFieldInput = "";
+
     private List<PcapNetworkInterface> localInterfaces;
 
     private int selectedInterfaceIndex;
 
-    private List<PacketModel> gotPackets = new LinkedList<PacketModel>();
+    private CopyOnWriteArrayList<PacketModel> gotPackets = new CopyOnWriteArrayList<PacketModel>();
 
     private PcapHandle runningHandle;
 
@@ -64,6 +76,7 @@ public class IndexController implements Initializable {
             setUpInterfacesComboBox();
             setUpTableView();
             refreshTable();
+            setUpTextField();
 
         } catch (Exception e) {
             e.printStackTrace();
@@ -228,7 +241,6 @@ public class IndexController implements Initializable {
             }
         });
 
-
         // 设置 endSniffer
         endSniffer.setOnAction(event -> {
             try {
@@ -239,5 +251,32 @@ public class IndexController implements Initializable {
                 throw new RuntimeException(e);
             }
         });
+    }
+
+
+    public void setUpTextField() {
+        textField.setEditable(true);
+        textField.setPromptText("请输入查询语句:");
+        textField.setAlignment(Pos.CENTER_LEFT);
+
+        // 设置 listener
+        textField.textProperty().addListener(new ChangeListener<String>() {
+            @Override
+            public void changed(ObservableValue<? extends String> observable, String oldValue, String newValue) {
+                // 获得输入文本
+                textFieldInput = newValue;
+            }
+        });
+
+        handleField.setOnAction(event -> {
+            try {
+                getFilterPacketList(runningHandle, textFieldInput, gotPackets);
+            } catch (Exception e) {
+                System.out.println("[!] Error: handleField");
+                e.printStackTrace();
+            }
+        });
+
+
     }
 }

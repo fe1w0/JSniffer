@@ -5,6 +5,7 @@
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.control.TableColumn?>
 <?import javafx.scene.control.TableView?>
+<?import javafx.scene.control.TextField?>
 <?import javafx.scene.control.TreeView?>
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.VBox?>
@@ -16,10 +17,17 @@
             <HBox alignment="CENTER" prefHeight="40.0" prefWidth="800.0" style="-fx-background-color: #ffffff; -fx-spacing: 15;">
                <children>
                   <Label prefHeight="28.0" prefWidth="76.0" text="网卡" />
-                  <ComboBox fx:id="interfacesComboBox" prefHeight="28.0" prefWidth="300.0" style="-fx-background-color: #676767;" />
+                  <ComboBox fx:id="interfacesComboBox" prefHeight="28.0" prefWidth="461.0" style="-fx-background-color: #bbbbbb;" />
                   <Button fx:id="startSniffer" mnemonicParsing="false" prefHeight="28.0" prefWidth="47.0" text="开始" />
                   <Button fx:id="endSniffer" mnemonicParsing="false" prefHeight="28.0" prefWidth="47.0" text="暂停" />
                </children>
+            </HBox>
+            <HBox alignment="CENTER" prefHeight="40.0" prefWidth="800.0" style="-fx-background-color: #ffffff; -fx-spacing: 15">
+                <children>
+                    <Label prefHeight="28.0" prefWidth="76.0" text="查找" />
+                    <TextField fx:id="textField" prefHeight="28.0" prefWidth="529.0" />
+                    <Button fx:id="handleField" mnemonicParsing="false" prefHeight="28.0" prefWidth="47.0" text="查找" />
+                </children>
             </HBox>
          </children>
       </VBox>
