@@ -1,9 +1,11 @@
 package xyz.xzaslxr.utils;
 
+import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import org.pcap4j.core.*;
 import org.pcap4j.packet.Packet;
 
+import java.io.File;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
@@ -18,15 +20,20 @@ public class Sniffer {
 
 
     public static CopyOnWriteArrayList<PacketModel> getFilterPacketList(PcapHandle pcapHandle, String bpf, CopyOnWriteArrayList<PacketModel> gotPackets) throws Exception {
-        CopyOnWriteArrayList<PacketModel> packetList = new CopyOnWriteArrayList<PacketModel>();
-        System.out.println(bpf);
-        for (PacketModel packetModel : gotPackets) {
-            if (judgeFilter(pcapHandle, bpf, packetModel.getItemPacket())) {
-                packetList.add(packetModel);
-                // System.out.println(packetModel.getItemPacket());
+        try {
+            CopyOnWriteArrayList<PacketModel> packetList = new CopyOnWriteArrayList<PacketModel>();
+            for (PacketModel packetModel : gotPackets) {
+                if (judgeFilter(pcapHandle, bpf, packetModel.getItemPacket())) {
+                    packetList.add(packetModel);
+                    // System.out.println(packetModel.getItemPacket());
+                }
             }
+            return packetList;
+        } catch (Exception e) {
+            System.out.println(bpf);
+            e.printStackTrace();
+            return new CopyOnWriteArrayList<PacketModel>();
         }
-        return packetList;
     }
 
     public static boolean judgeFilter(PcapHandle pcapHandle, String bpf, Packet packet) throws Exception {
@@ -48,13 +55,15 @@ public class Sniffer {
         // Debug filter
         // String filter = "dst port 443";
         // handle.setFilter(filter, BpfProgram.BpfCompileMode.OPTIMIZE);
-        PacketListener packetListener = new PacketListener() {
-            @Override
-            public void gotPacket(Packet packet) {
-                if (packet != null) {
+        PacketListener packetListener = packet -> {
+            if (packet != null) {
+                try {
                     PacketModel packetModel = new PacketModel(handle.getTimestamp(), PCAP_COUNTER++, packet);
                     packetsTable.add(packetModel);
                     gotPackets.add(packetModel);
+                } catch (Exception e) {
+                    System.out.println("[!] Error PacketModel");
+                    e.printStackTrace();
                 }
             }
         };
@@ -70,6 +79,50 @@ public class Sniffer {
             System.out.println("[!] Error: runSniffer");
             e.printStackTrace();
         }
+    }
+
+    public static void savePackets(PcapHandle handle, File pcapFile, CopyOnWriteArrayList<PacketModel> packetModels) throws Exception {
+        PcapDumper dumper = handle.dumpOpen(pcapFile.getAbsolutePath()); // 用于 Dump .pcap 文件
+        for (PacketModel packetModel : packetModels) {
+            dumper.dump(packetModel.getItemPacket());
+        }
+        dumper.close();
+        handle.close();
+    }
+
+    public static void openPacketFile(PcapHandle openFilePcapHandle, List<PacketModel> gotPackets, ObservableList<PacketModel> packetsTable) throws Exception {
+        Packet packet = null;
+        PacketListener packetListener = new PacketListener() {
+            @Override
+            public void gotPacket(Packet packet) {
+                if (packet != null) {
+                    try {
+                        PacketModel packetModel = new PacketModel(openFilePcapHandle.getTimestamp(), PCAP_COUNTER++, packet);
+                        packetsTable.add(packetModel);
+                        gotPackets.add(packetModel);
+                    } catch (Exception e) {
+                        System.out.println("[!] Error PacketModel");
+                        e.printStackTrace();
+                    }
+                }
+            }
+        };
+
+        try {
+            // -1 表示无限循环
+            int maxPacketSize = -1;
+            openFilePcapHandle.loop(maxPacketSize, packetListener);
+        } catch (InterruptedException i) {
+            openFilePcapHandle.breakLoop();
+            openFilePcapHandle.close();
+            System.out.println("[+] End loop");
+        } catch (Exception e) {
+            openFilePcapHandle.breakLoop();
+            openFilePcapHandle.close();
+            System.out.println("[!] Error: runSniffer");
+            e.printStackTrace();
+        }
+
     }
 
     public static void zeroCounter() throws Exception {

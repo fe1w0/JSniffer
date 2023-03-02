@@ -3,6 +3,9 @@
 <?import javafx.scene.control.Button?>
 <?import javafx.scene.control.ComboBox?>
 <?import javafx.scene.control.Label?>
+<?import javafx.scene.control.Menu?>
+<?import javafx.scene.control.MenuBar?>
+<?import javafx.scene.control.MenuItem?>
 <?import javafx.scene.control.TableColumn?>
 <?import javafx.scene.control.TableView?>
 <?import javafx.scene.control.TextField?>
@@ -10,11 +13,32 @@
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.VBox?>
 
-<VBox maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="600.0" prefWidth="800.0" style="-fx-background-color: #ffffff#ffffff;" xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1" fx:controller="xyz.xzaslxr.fxml.controller.Controller">
+<VBox fx:id="root" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="600.0" prefWidth="800.0" style="-fx-background-color: #ffffff#ffffff;" xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1" fx:controller="xyz.xzaslxr.fxml.controller.Controller">
    <children>
-      <VBox alignment="TOP_CENTER" prefHeight="120.0" prefWidth="800.0" style="-fx-background-color: #afafaf;">
+      <MenuBar>
+        <menus>
+            <Menu mnemonicParsing="false" text="页面">
+                <items>
+                    <MenuItem fx:id="mainPage" mnemonicParsing="false" text="Main" />
+                    <MenuItem fx:id="dataAnalysisPage" mnemonicParsing="false" text="数据分析" />
+                </items>
+            </Menu>
+          <Menu mnemonicParsing="false" text="File">
+            <items>
+              <MenuItem fx:id="savePcapFile" mnemonicParsing="false" text="保存文件" />
+                <MenuItem fx:id="openPcapFile" mnemonicParsing="false" text="打开文件"/>
+            </items>
+          </Menu>
+          <Menu mnemonicParsing="false" text="Help">
+            <items>
+              <MenuItem fx:id="aboutPage" mnemonicParsing="false" text="About" />
+            </items>
+          </Menu>
+        </menus>
+      </MenuBar>
+      <VBox alignment="TOP_CENTER" prefWidth="800.0" style="-fx-background-color: #ffffff;">
          <children>
-            <HBox alignment="CENTER" prefHeight="40.0" prefWidth="800.0" style="-fx-background-color: #ffffff; -fx-spacing: 15;">
+            <HBox alignment="CENTER" prefWidth="800.0" style="-fx-background-color: #ffffff; -fx-spacing: 15;">
                <children>
                   <Label prefHeight="28.0" prefWidth="76.0" text="网卡" />
                   <ComboBox fx:id="interfacesComboBox" prefHeight="28.0" prefWidth="461.0" style="-fx-background-color: #bbbbbb;" />
@@ -22,7 +46,7 @@
                   <Button fx:id="endSniffer" mnemonicParsing="false" prefHeight="28.0" prefWidth="47.0" text="暂停" />
                </children>
             </HBox>
-            <HBox alignment="CENTER" prefHeight="40.0" prefWidth="800.0" style="-fx-background-color: #ffffff; -fx-spacing: 15">
+            <HBox alignment="CENTER" prefWidth="800.0" style="-fx-background-color: #ffffff; -fx-spacing: 15;">
                 <children>
                     <Label prefHeight="28.0" prefWidth="76.0" text="查找" />
                     <TextField fx:id="textField" prefHeight="28.0" prefWidth="529.0" />
@@ -31,7 +55,7 @@
             </HBox>
          </children>
       </VBox>
-      <TableView fx:id="tableView" prefHeight="250.0" prefWidth="800.0">
+      <TableView fx:id="tableView" prefHeight="300.0" prefWidth="800.0">
         <columns>
             <TableColumn fx:id="id" prefWidth="60.0" text="id" />
             <TableColumn fx:id="time" prefWidth="148.0" text="time" />
@@ -41,6 +65,6 @@
             <TableColumn fx:id="length" prefWidth="148.0" text="length" />
         </columns>
       </TableView>
-      <TreeView fx:id="treeView" prefHeight="230.0" prefWidth="800.0" />
+      <TreeView fx:id="treeView" prefWidth="800.0" />
    </children>
 </VBox>

@@ -1,14 +1,20 @@
 package xyz.xzaslxr;
 
 import javafx.application.Application;
+import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
+import javafx.stage.FileChooser;
 import javafx.stage.Stage;
-import org.pcap4j.core.PcapNetworkInterface;
-import org.pcap4j.core.Pcaps;
+
+import java.io.File;
+
+import static xyz.xzaslxr.utils.Sniffer.savePackets;
+
 
 public class JSniffer extends Application {
+
     public static void main(String[] args) {
         launch(args); // 启动JavaFX应用，之后会调用start方法
     }
@@ -29,5 +35,4 @@ public class JSniffer extends Application {
         // 展示舞台
         stage.show();
     }
-
 }

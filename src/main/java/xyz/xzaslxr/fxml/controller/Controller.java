@@ -9,14 +9,20 @@ import javafx.concurrent.Task;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.geometry.Pos;
+import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
+import javafx.scene.layout.VBox;
+import javafx.stage.FileChooser;
+import javafx.stage.Stage;
+import javafx.util.Callback;
 import org.pcap4j.core.PcapHandle;
 import org.pcap4j.core.PcapNetworkInterface;
 import org.pcap4j.core.Pcaps;
 import org.pcap4j.packet.Packet;
 import xyz.xzaslxr.utils.PacketModel;
 
+import java.io.File;
 import java.net.URL;
 import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -25,6 +31,9 @@ import java.util.stream.Collectors;
 import static xyz.xzaslxr.utils.Sniffer.*;
 
 public class Controller implements Initializable {
+
+
+    @FXML private VBox root;
 
     // ComboBox 列出所有网卡
     @FXML private ComboBox interfacesComboBox;
@@ -53,6 +62,16 @@ public class Controller implements Initializable {
 
     @FXML private Button handleField = new Button();
 
+    // 添加 menu 功能
+    @FXML private MenuItem mainPage;
+
+    @FXML private MenuItem dataAnalysisPage;
+
+    @FXML private MenuItem savePcapFile;
+
+    @FXML private MenuItem openPcapFile;
+
+    @FXML private MenuItem aboutPage;
 
     // 输入的 TextField
     private String textFieldInput = "";
@@ -61,11 +80,12 @@ public class Controller implements Initializable {
     // true 表示当前表格为 filter 后的数据.
     public boolean isFilter = false;
 
-
     // snifferState 用于记录和表示App的状态，
     // true 表示运行
     // false 表示已经终止
     public boolean snifferState = false;
+
+    public String selectedRowString = "";
 
     private List<PcapNetworkInterface> localInterfaces;
 
@@ -73,6 +93,7 @@ public class Controller implements Initializable {
 
     private CopyOnWriteArrayList<PacketModel> gotPackets = new CopyOnWriteArrayList<PacketModel>();
 
+    private ObservableList<PacketModel> globalPackets;
     private PcapHandle runningHandle;
 
     private PacketModel oldSelectedPacket = null;
@@ -83,11 +104,13 @@ public class Controller implements Initializable {
             setUpInterfacesComboBox();
             setUpTableView();
             setUpTextField();
-            // refreshTable();
+            setUpMenu();
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
+
+
 
     private boolean judgeParentNode(String queryString) {
         Boolean result = false;
@@ -156,11 +179,17 @@ public class Controller implements Initializable {
 
     public void listenGotPackets() throws Exception {
         // 添加 List 监听器
-        if ( !isFilter) {
+        try {
+            if ( !isFilter) {
+                refreshTable(gotPackets);
+            } else {
+                CopyOnWriteArrayList<PacketModel> packets = getFilterPacketList(runningHandle, textFieldInput, gotPackets);
+                refreshTable(packets);
+            }
+        } catch (Exception e) {
             refreshTable(gotPackets);
-        } else {
-            CopyOnWriteArrayList<PacketModel> packets = getFilterPacketList(runningHandle, textFieldInput, gotPackets);
-            refreshTable(packets);
+            System.out.println("[!] Failed to refresh table: textFieldInput");
+            e.printStackTrace();
         }
     }
 
@@ -169,6 +198,25 @@ public class Controller implements Initializable {
     public void refreshTable(CopyOnWriteArrayList<PacketModel> packets) throws Exception {
         // 根据传入的 packets 刷新
         ObservableList<PacketModel> packetsTable = FXCollections.observableArrayList(packets);
+        tableView.setRowFactory(new Callback<TableView<PacketModel>, TableRow<PacketModel>>() {
+            @Override
+            public TableRow<PacketModel> call(TableView<PacketModel> param) {
+                final TableRow<PacketModel> row = new TableRow<PacketModel>() {
+                    @Override
+                    protected void updateItem(PacketModel packetModel, boolean empty) {
+                        super.updateItem(packetModel, empty);
+                        if (packetModel != null && selectedRowString != "") {
+                            if (highlightTableItems(packetModel)){
+                                setStyle("-fx-background-color: #6795e3;");
+                            } else {
+                                setStyle("-fx-background-color: #ffffff;");
+                            }
+                        }
+                    }
+                };
+                return row;
+            }
+        });
         tableView.getItems().setAll(packetsTable);
     }
 
@@ -179,6 +227,11 @@ public class Controller implements Initializable {
 
     public void setCellValueFactory(TableColumn tablecolumn, PropertyValueFactory propertyValueFactory) {
         tablecolumn.setCellValueFactory(propertyValueFactory);
+    }
+
+    public boolean highlightTableItems(PacketModel packetModel) {
+        // 检查当前的row的packetModel的StreamString，是否与当前
+        return (selectedRowString.equals(packetModel.getStreamString()));
     }
 
     public void setUpTableView() throws Exception {
@@ -199,19 +252,22 @@ public class Controller implements Initializable {
         id.setSortType(TableColumn.SortType.ASCENDING);
         length.setSortType(TableColumn.SortType.ASCENDING);
 
+
         tableView.getSelectionModel().selectedItemProperty().addListener((obs, oldSelection, newSelection) -> {
              if (oldSelectedPacket != null && newSelection != null && !oldSelectedPacket.compare((PacketModel) newSelection)) {
                  oldSelectedPacket = (PacketModel) newSelection;
                  try {
                      expandPacket( ((PacketModel) newSelection).getItemPacket());
+                     // 设置 selectRowString
+                     selectedRowString = ((PacketModel) newSelection).getStreamString();
                  } catch (Exception e) {
                      throw new RuntimeException(e);
                  }
-                 // System.out.println(newSelection);
             } else if (oldSelectedPacket == null && newSelection != null) {
                  oldSelectedPacket = (PacketModel) newSelection;
                  try {
                      expandPacket( ((PacketModel) newSelection).getItemPacket());
+                     selectedRowString = ((PacketModel) newSelection).getStreamString();
                  } catch (Exception e) {
                      throw new RuntimeException(e);
                  }
@@ -244,11 +300,13 @@ public class Controller implements Initializable {
                         snifferState = true;
                         // 重置 isFilter
                         isFilter = false;
+                        // 重置 streamMap
+                        selectedRowString = "";
                         // 重置 TableView
-                        ObservableList<PacketModel> packetsTable = FXCollections.observableArrayList(gotPackets);
-                        tableView.getItems().setAll(packetsTable);
+                        globalPackets = FXCollections.observableArrayList(gotPackets);
+                        tableView.getItems().setAll(globalPackets);
                         // 添加 packetsTable 的监听器
-                        packetsTable.addListener(new ListChangeListener<PacketModel>() {
+                        globalPackets.addListener(new ListChangeListener<PacketModel>() {
                             @Override
                             public void onChanged(Change<? extends PacketModel> c) {
                                 try {
@@ -264,7 +322,7 @@ public class Controller implements Initializable {
                         runningHandle = getPcapHandler(localInterfaces.get(selectedInterfaceIndex));
                         try {
                             // 开始启动监听模块
-                            runSniffer(runningHandle, gotPackets, packetsTable);
+                            runSniffer(runningHandle, gotPackets, globalPackets);
                         } catch (Exception e) {
                             System.out.println("[!] Error: startSniffer.runSniffer");
                             throw new RuntimeException(e);
@@ -281,9 +339,7 @@ public class Controller implements Initializable {
         // 设置 endSniffer
         endSniffer.setOnAction(event -> {
             try {
-                snifferState = false;
-                runningHandle.breakLoop();
-                zeroCounter();
+                endSnifferMethod();
             } catch (Exception e) {
                 System.out.println("[!] Error: endSniffer");
                 throw new RuntimeException(e);
@@ -291,6 +347,15 @@ public class Controller implements Initializable {
         });
     }
 
+
+    public void endSnifferMethod() throws Exception {
+        snifferState = false;
+        zeroCounter();
+        if (runningHandle != null && runningHandle.isOpen()) {
+            runningHandle.breakLoop();
+            runningHandle.close();
+        }
+    }
 
     public void setUpTextField() {
         textField.setEditable(true);
@@ -302,6 +367,7 @@ public class Controller implements Initializable {
             @Override
             public void changed(ObservableValue<? extends String> observable, String oldValue, String newValue) {
                 // 获得输入文本
+                isFilter = false;
                 textFieldInput = newValue;
             }
         });
@@ -321,4 +387,102 @@ public class Controller implements Initializable {
             }
         });
     }
+
+    public void setUpMenu() {
+        // 设置 savePcapFile
+        savePcapFile.setOnAction(event -> {
+            try {
+                // EndSniffer
+                endSnifferMethod();
+                // https://stackoverflow.com/questions/30464238/javafx-getscene-returns-null
+                Scene scene = root.getScene();
+                invokeSaveFileChooser(scene);
+            } catch (Exception e) {
+                System.out.println("[+] Start to save the pack to path of file");
+                throw new RuntimeException(e);
+            }
+        });
+
+        // 设置 openPcapFile
+        openPcapFile.setOnAction(event -> {
+            try {
+                // EndSniffer
+                endSnifferMethod();
+                Scene scene = root.getScene();
+                invokeOpenFileChooser(scene);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        });
+    }
+
+
+    public void invokeOpenFileChooser(Scene scene) throws Exception {
+
+        FileChooser openFileChooser = new FileChooser();
+        openFileChooser.setTitle("打开文件");
+        openFileChooser.setInitialDirectory(new File(System.getProperty("user.dir")));
+        // 给文件对话框添加文件类型过滤器
+        openFileChooser.getExtensionFilters().addAll(
+                new FileChooser.ExtensionFilter("pcap文件(*.pcap)", "*.pcap"),
+                new FileChooser.ExtensionFilter("所有文件(*.*)", "*.*")
+        );
+        File openFile = openFileChooser.showOpenDialog(scene.getWindow());
+        if (openFile != null) {
+            try {
+                if (globalPackets == null) {
+                    globalPackets = FXCollections.observableArrayList(gotPackets);
+                }
+                gotPackets = new CopyOnWriteArrayList<PacketModel>();
+                globalPackets.remove(0, globalPackets.size() - 1);
+                globalPackets.addListener(new ListChangeListener<PacketModel>() {
+                    @Override
+                    public void onChanged(Change<? extends PacketModel> c) {
+                        try {
+                            listenGotPackets();
+                        } catch (Exception e) {
+                            throw new RuntimeException(e);
+                        }
+                    }
+                });
+                runningHandle = Pcaps.openOffline(openFile.getAbsolutePath());
+                openPacketFile(runningHandle, gotPackets, globalPackets);
+            } catch (Exception e) {
+                warningAlert("打开文件错误");
+                e.printStackTrace();
+            }
+        }
+
+
+    }
+
+    public void invokeSaveFileChooser(Scene scene) throws Exception {
+        // invoke file chooser to save the packet
+        FileChooser saveFileChooser = new FileChooser();
+        saveFileChooser.setTitle("保存文件");
+        // 设置默认地址，为脚本运行的地址
+        saveFileChooser.setInitialDirectory(new File(System.getProperty("user.dir")));
+        // 创建文件类型过滤器 *.pcap
+        FileChooser.ExtensionFilter filter = new FileChooser.ExtensionFilter("pcap文件(*.pcap)", "*.pcap");
+        // 给文件对话框添加文件类型过滤器
+        saveFileChooser.getExtensionFilters().add(filter);
+        // 显示保存的对话框
+        File file = saveFileChooser.showSaveDialog(scene.getWindow());
+
+        if (file == null || runningHandle == null || gotPackets == null) {
+            // 处理无效选择，可能弹窗吧
+            warningAlert("产生异常，请查看是否选择文件和是否开启嗅探器，以及是否嗅探到数据包。");
+        } else {
+            savePackets(runningHandle, file, gotPackets);
+        }
+    }
+
+    public void warningAlert(String message) {
+        Alert alert = new Alert(Alert.AlertType.ERROR);
+        alert.setHeaderText("错误");
+        alert.setContentText(message);
+        alert.show();
+    }
 }
+
+
