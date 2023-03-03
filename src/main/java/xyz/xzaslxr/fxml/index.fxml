@@ -19,8 +19,8 @@
         <menus>
             <Menu mnemonicParsing="false" text="页面">
                 <items>
-                    <MenuItem fx:id="mainPage" mnemonicParsing="false" text="Main" />
-                    <MenuItem fx:id="dataAnalysisPage" mnemonicParsing="false" text="数据分析" />
+<!--                    <MenuItem fx:id="mainPageMenuItem" mnemonicParsing="false" text="流量嗅探" />-->
+                    <MenuItem fx:id="dataAnalysisPageMenuItem" mnemonicParsing="false" text="数据分析" />
                 </items>
             </Menu>
           <Menu mnemonicParsing="false" text="File">

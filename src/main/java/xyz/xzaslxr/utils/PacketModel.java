@@ -3,13 +3,9 @@ package xyz.xzaslxr.utils;
 import javafx.beans.property.SimpleIntegerProperty;
 import javafx.beans.property.SimpleStringProperty;
 import org.pcap4j.packet.*;
-import org.pcap4j.packet.namednumber.IcmpV4Type;
 
 import java.sql.Timestamp;
 import java.util.Comparator;
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.TreeSet;
 
 public class PacketModel {
 
@@ -26,7 +22,6 @@ public class PacketModel {
     private final Packet itemPacket;
 
     public PacketModel(Timestamp time, Short id , Packet packet) {
-
         if ( packet.get(IpV4Packet.class) != null) {
             IpV4Packet ipPacket = packet.get(IpV4Packet.class);
             this.id = new SimpleIntegerProperty(id);

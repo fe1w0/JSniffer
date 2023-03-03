@@ -7,11 +7,13 @@ import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
 import javafx.concurrent.Task;
 import javafx.fxml.FXML;
+import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
+import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.VBox;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
@@ -61,6 +63,8 @@ public class Controller implements Initializable {
     @FXML private TextField textField = new TextField();
 
     @FXML private Button handleField = new Button();
+
+    @FXML private MenuItem dataAnalysisPageMenuItem;
 
     // 添加 menu 功能
     @FXML private MenuItem mainPage;
@@ -414,8 +418,46 @@ public class Controller implements Initializable {
                 e.printStackTrace();
             }
         });
+
+        // 设置 dataAnalysisPageMenuItem
+        dataAnalysisPageMenuItem.setOnAction(event -> {
+            try {
+                endSnifferMethod();
+                if (globalPackets == null || globalPackets.size() == 0) {
+                    warningAlert("无法分析，请确保已输入数据。");
+                } else {
+                    showPcapStatistics();
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        });
     }
 
+    /**
+     * Open a dialog to show pcap statistics.
+     * Reference: http://gitbook.net/javafx/javafx-statistics.html
+     */
+    public void showPcapStatistics() {
+        try {
+            // Load the fxml file and create a new stage for the popup.
+            FXMLLoader loader = new FXMLLoader();
+            loader.setLocation(getClass().getResource("../PcapStatistics.fxml"));
+
+            AnchorPane page = (AnchorPane) loader.load();
+            Stage dialogStage = new Stage();
+            dialogStage.setTitle("Pcap Statistics");
+            Scene scene = new Scene(page);
+            dialogStage.setScene(scene);
+
+            // Set the pcap into the controller.
+            PcapStatisticsController controller = loader.getController();
+            controller.getData(globalPackets);
+            dialogStage.show();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
 
     public void invokeOpenFileChooser(Scene scene) throws Exception {
 
