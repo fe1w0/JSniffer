@@ -29,6 +29,9 @@ public class PcapStatisticsController {
     @FXML
     private NumberAxis yAxis;
 
+    @FXML
+    private Label pieUnderLabel;
+
     private long lastTimeStamp;
 
     private int xAxisNumber = 6;
@@ -39,7 +42,7 @@ public class PcapStatisticsController {
 
     private ObservableList<String> timeName = FXCollections.observableArrayList();
 
-    private ObservableList<String> protocolNames = FXCollections.observableArrayList();
+    private float packetNumber;
 
     /**
      * Initializes the controller class. This method is automatically called
@@ -57,7 +60,7 @@ public class PcapStatisticsController {
      */
     public void getData(ObservableList<PacketModel> globalPackets) throws Exception {
         axisData = new LinkedHashMap<>();
-
+        packetNumber = globalPackets.size();
         // 计算流量包的总时间长度
         long firstTimeStamp = getTimeStampFromPacketModel(globalPackets.get(0));
         lastTimeStamp = getTimeStampFromPacketModel(globalPackets.get(globalPackets.size() - 1));
@@ -95,21 +98,15 @@ public class PcapStatisticsController {
      */
     public void setPie() {
         for (String key : pieData.keySet()) {
-            pcapPieChart.getData().add(new PieChart.Data(key, pieData.get(key)));
+            pcapPieChart.getData().add(new PieChart.Data(key, (pieData.get(key) / packetNumber) * 100) );
         }
 
-        final Label caption = new Label("");
-        caption.setTextFill(Color.DARKORANGE);
-        caption.setStyle("-fx-font: 24 arial;");
+        pieUnderLabel.setStyle("-fx-font: 18 arial;");
 
         for (final PieChart.Data data : pcapPieChart.getData()) {
-            data.getNode().addEventHandler(MouseEvent.MOUSE_PRESSED,
-                    new EventHandler<MouseEvent>() {
-                        @Override public void handle(MouseEvent e) {
-                            caption.setTranslateX(e.getSceneX());
-                            caption.setTranslateY(e.getSceneY());
-                            caption.setText(String.valueOf(data.getPieValue()) + "%");
-                        }
+            data.getNode().addEventHandler(MouseEvent.MOUSE_CLICKED,
+                    event -> {
+                        pieUnderLabel.setText(data.getName() + ": " + data.getPieValue() + "%");
                     });
         }
         pcapPieChart.setLegendVisible(true);

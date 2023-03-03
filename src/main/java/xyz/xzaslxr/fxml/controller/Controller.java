@@ -13,7 +13,7 @@ import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
-import javafx.scene.layout.AnchorPane;
+import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
@@ -379,7 +379,9 @@ public class Controller implements Initializable {
         handleField.setOnAction(event -> {
             try {
                 isFilter = true;
-
+                if (runningHandle == null) {
+                    System.out.println("running handle is null");
+                }
                 // 添加暂停时，对 TableView的刷新
                 if (!snifferState) {
                     // 手动监听
@@ -444,7 +446,7 @@ public class Controller implements Initializable {
             FXMLLoader loader = new FXMLLoader();
             loader.setLocation(getClass().getResource("../PcapStatistics.fxml"));
 
-            AnchorPane page = (AnchorPane) loader.load();
+            HBox page = (HBox) loader.load();
             Stage dialogStage = new Stage();
             dialogStage.setTitle("Pcap Statistics");
             Scene scene = new Scene(page);
