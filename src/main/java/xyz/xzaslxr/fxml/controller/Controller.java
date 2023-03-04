@@ -192,13 +192,13 @@ public class Controller implements Initializable {
             }
         } catch (Exception e) {
             refreshTable(gotPackets);
-            System.out.println("[!] Failed to refresh table: textFieldInput");
+            System.out.println("[!] Failed to refresh table with the filter: " + textFieldInput);
             e.printStackTrace();
         }
     }
 
     // 最头疼的地方
-    // 想换成callback
+    // 没有找到合适的实现方式，尤其是 TableRow 修改颜色这块
     public void refreshTable(CopyOnWriteArrayList<PacketModel> packets) throws Exception {
         // 根据传入的 packets 刷新
         ObservableList<PacketModel> packetsTable = FXCollections.observableArrayList(packets);
@@ -221,6 +221,7 @@ public class Controller implements Initializable {
                 return row;
             }
         });
+
         tableView.getItems().setAll(packetsTable);
     }
 
@@ -357,7 +358,7 @@ public class Controller implements Initializable {
         zeroCounter();
         if (runningHandle != null && runningHandle.isOpen()) {
             runningHandle.breakLoop();
-            runningHandle.close();
+            // runningHandle.close();
         }
     }
 

@@ -20,27 +20,31 @@ public class Sniffer {
 
 
     public static CopyOnWriteArrayList<PacketModel> getFilterPacketList(PcapHandle pcapHandle, String bpf, CopyOnWriteArrayList<PacketModel> gotPackets) throws Exception {
-        try {
-            CopyOnWriteArrayList<PacketModel> packetList = new CopyOnWriteArrayList<PacketModel>();
-            for (PacketModel packetModel : gotPackets) {
-                if (judgeFilter(pcapHandle, bpf, packetModel.getItemPacket())) {
-                    packetList.add(packetModel);
-                    // System.out.println(packetModel.getItemPacket());
-                }
+        // try {
+        CopyOnWriteArrayList<PacketModel> packetList = new CopyOnWriteArrayList<PacketModel>();
+        for (PacketModel packetModel : gotPackets) {
+            if (judgeFilter(pcapHandle, bpf, packetModel.getItemPacket())) {
+                packetList.add(packetModel);
+                // System.out.println(packetModel.getItemPacket());
             }
-            return packetList;
-        } catch (Exception e) {
-            System.out.println(bpf);
-            e.printStackTrace();
-            return new CopyOnWriteArrayList<PacketModel>();
         }
+        return packetList;
+        // } catch (Exception e) {
+        //     System.out.println(bpf);
+        //     e.printStackTrace();
+        //     return new CopyOnWriteArrayList<PacketModel>();
+        // }
     }
 
     public static boolean judgeFilter(PcapHandle pcapHandle, String bpf, Packet packet) throws Exception {
         // https://github.com/kaitoy/pcap4j/blob/0b4fad83439808c32f61054b2693641991572f6f/pcap4j-core/src/main/java/org/pcap4j/core/BpfProgram.java
         // https://github.com/kaitoy/pcap4j/blob/0b4fad83439808c32f61054b2693641991572f6f/pcap4j-core/src/test/java/org/pcap4j/core/BpfProgramTest.java
-        BpfProgram bpfProgram = pcapHandle.compileFilter(bpf, BpfProgram.BpfCompileMode.OPTIMIZE, PcapHandle.PCAP_NETMASK_UNKNOWN);
-        return bpfProgram.applyFilter(packet);
+        if (bpf == "") {
+            return true;
+        } else {
+            BpfProgram bpfProgram = pcapHandle.compileFilter(bpf, BpfProgram.BpfCompileMode.OPTIMIZE, PcapHandle.PCAP_NETMASK_UNKNOWN);
+            return bpfProgram.applyFilter(packet);
+        }
     }
 
     public static PcapHandle getPcapHandler(PcapNetworkInterface networkInterface) throws Exception {
@@ -87,7 +91,7 @@ public class Sniffer {
             dumper.dump(packetModel.getItemPacket());
         }
         dumper.close();
-        handle.close();
+        // handle.close();
     }
 
     public static void openPacketFile(PcapHandle openFilePcapHandle, List<PacketModel> gotPackets, ObservableList<PacketModel> packetsTable) throws Exception {
@@ -114,11 +118,11 @@ public class Sniffer {
             openFilePcapHandle.loop(maxPacketSize, packetListener);
         } catch (InterruptedException i) {
             openFilePcapHandle.breakLoop();
-            openFilePcapHandle.close();
+            // openFilePcapHandle.close();
             System.out.println("[+] End loop");
         } catch (Exception e) {
             openFilePcapHandle.breakLoop();
-            openFilePcapHandle.close();
+            // openFilePcapHandle.close();
             System.out.println("[!] Error: runSniffer");
             e.printStackTrace();
         }
