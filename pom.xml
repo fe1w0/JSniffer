@@ -15,7 +15,7 @@
                 <artifactId>javafx-maven-plugin</artifactId>
                 <version>0.0.8</version>
                 <configuration>
-                    <mainClass>HelloFX</mainClass>
+                    <mainClass>xyz.xzaslxr.JSniffer</mainClass>
                 </configuration>
             </plugin>
         </plugins>
