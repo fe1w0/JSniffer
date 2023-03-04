@@ -1,4 +1,4 @@
-package xyz.xzaslxr.utils;
+package xyz.xzaslxr.jsniffer.utils;
 
 import javafx.beans.property.SimpleIntegerProperty;
 import javafx.beans.property.SimpleStringProperty;
@@ -6,6 +6,7 @@ import org.pcap4j.packet.*;
 
 import java.sql.Timestamp;
 import java.util.Comparator;
+
 
 public class PacketModel {
 
@@ -75,7 +76,7 @@ public class PacketModel {
             srcAddr = itemPacket.get(IpV6Packet.class).getHeader().getSrcAddr().toString();
             dstAddr = itemPacket.get(IpV6Packet.class).getHeader().getDstAddr().toString();
         }
-            if (itemPacket.get(TcpPacket.class) != null) {
+        if (itemPacket.get(TcpPacket.class) != null) {
             streamString = getStreamString(
                     srcAddr,
                     itemPacket.get(TcpPacket.class).getHeader().getSrcPort().toString(),
@@ -152,15 +153,15 @@ public class PacketModel {
     }
 
     public void setSrc(String src) {
-            this.src.set(src);
-        }
+        this.src.set(src);
+    }
 
     public String getDst() {
         return this.dst.get();
     }
 
     public void setDst(String dst) {
-            this.dst.set(dst);
+        this.dst.set(dst);
     }
 
     public SimpleStringProperty dstProperty() {
@@ -180,8 +181,8 @@ public class PacketModel {
     }
 
     public int getLength() {
-            return this.length.get();
-        }
+        return this.length.get();
+    }
 
     public void setLength(int length) {
         this.length.set(length);

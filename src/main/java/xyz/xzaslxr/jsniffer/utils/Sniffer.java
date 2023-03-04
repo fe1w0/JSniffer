@@ -1,6 +1,5 @@
-package xyz.xzaslxr.utils;
+package xyz.xzaslxr.jsniffer.utils;
 
-import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import org.pcap4j.core.*;
 import org.pcap4j.packet.Packet;

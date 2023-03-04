@@ -1,4 +1,5 @@
-package xyz.xzaslxr.fxml.controller;
+package xyz.xzaslxr.jsniffer.controller;
+
 
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
@@ -22,7 +23,8 @@ import org.pcap4j.core.PcapHandle;
 import org.pcap4j.core.PcapNetworkInterface;
 import org.pcap4j.core.Pcaps;
 import org.pcap4j.packet.Packet;
-import xyz.xzaslxr.utils.PacketModel;
+import xyz.xzaslxr.jsniffer.SnifferApplication;
+import xyz.xzaslxr.jsniffer.utils.PacketModel;
 
 import java.io.File;
 import java.net.URL;
@@ -30,9 +32,11 @@ import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.stream.Collectors;
 
-import static xyz.xzaslxr.utils.Sniffer.*;
 
-public class Controller implements Initializable {
+import static xyz.xzaslxr.jsniffer.utils.Sniffer.*;
+
+
+public class MainController implements Initializable {
 
 
     @FXML private VBox root;
@@ -202,9 +206,10 @@ public class Controller implements Initializable {
     public void refreshTable(CopyOnWriteArrayList<PacketModel> packets) throws Exception {
         // 根据传入的 packets 刷新
         ObservableList<PacketModel> packetsTable = FXCollections.observableArrayList(packets);
-        tableView.setRowFactory(new Callback<TableView<PacketModel>, TableRow<PacketModel>>() {
+        tableView.setRowFactory(new Callback<TableView, TableRow>() {
+
             @Override
-            public TableRow<PacketModel> call(TableView<PacketModel> param) {
+            public TableRow call(TableView param) {
                 final TableRow<PacketModel> row = new TableRow<PacketModel>() {
                     @Override
                     protected void updateItem(PacketModel packetModel, boolean empty) {
@@ -259,24 +264,24 @@ public class Controller implements Initializable {
 
 
         tableView.getSelectionModel().selectedItemProperty().addListener((obs, oldSelection, newSelection) -> {
-             if (oldSelectedPacket != null && newSelection != null && !oldSelectedPacket.compare((PacketModel) newSelection)) {
-                 oldSelectedPacket = (PacketModel) newSelection;
-                 try {
-                     expandPacket( ((PacketModel) newSelection).getItemPacket());
-                     // 设置 selectRowString
-                     selectedRowString = ((PacketModel) newSelection).getStreamString();
-                 } catch (Exception e) {
-                     throw new RuntimeException(e);
-                 }
+            if (oldSelectedPacket != null && newSelection != null && !oldSelectedPacket.compare((PacketModel) newSelection)) {
+                oldSelectedPacket = (PacketModel) newSelection;
+                try {
+                    expandPacket( ((PacketModel) newSelection).getItemPacket());
+                    // 设置 selectRowString
+                    selectedRowString = ((PacketModel) newSelection).getStreamString();
+                } catch (Exception e) {
+                    throw new RuntimeException(e);
+                }
             } else if (oldSelectedPacket == null && newSelection != null) {
-                 oldSelectedPacket = (PacketModel) newSelection;
-                 try {
-                     expandPacket( ((PacketModel) newSelection).getItemPacket());
-                     selectedRowString = ((PacketModel) newSelection).getStreamString();
-                 } catch (Exception e) {
-                     throw new RuntimeException(e);
-                 }
-             }
+                oldSelectedPacket = (PacketModel) newSelection;
+                try {
+                    expandPacket( ((PacketModel) newSelection).getItemPacket());
+                    selectedRowString = ((PacketModel) newSelection).getStreamString();
+                } catch (Exception e) {
+                    throw new RuntimeException(e);
+                }
+            }
         });
     }
 
@@ -355,6 +360,8 @@ public class Controller implements Initializable {
 
     public void endSnifferMethod() throws Exception {
         snifferState = false;
+        isFilter = false;
+        textFieldInput = "";
         zeroCounter();
         if (runningHandle != null && runningHandle.isOpen()) {
             runningHandle.breakLoop();
@@ -445,7 +452,7 @@ public class Controller implements Initializable {
         try {
             // Load the fxml file and create a new stage for the popup.
             FXMLLoader loader = new FXMLLoader();
-            loader.setLocation(getClass().getResource("../PcapStatistics.fxml"));
+            loader.setLocation(SnifferApplication.class.getResource("statistics-view.fxml"));
 
             HBox page = (HBox) loader.load();
             Stage dialogStage = new Stage();
@@ -454,7 +461,7 @@ public class Controller implements Initializable {
             dialogStage.setScene(scene);
 
             // Set the pcap into the controller.
-            PcapStatisticsController controller = loader.getController();
+            StatisticsController controller = loader.getController();
             controller.getData(globalPackets);
             dialogStage.show();
         } catch (Exception e) {

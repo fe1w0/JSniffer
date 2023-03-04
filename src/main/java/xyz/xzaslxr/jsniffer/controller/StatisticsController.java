@@ -1,26 +1,20 @@
-package xyz.xzaslxr.fxml.controller;
+package xyz.xzaslxr.jsniffer.controller;
 
 
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
-import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.scene.chart.*;
 import javafx.scene.control.Label;
 import javafx.scene.input.MouseEvent;
-import javafx.scene.paint.Color;
-import xyz.xzaslxr.utils.PacketModel;
+import xyz.xzaslxr.jsniffer.utils.PacketModel;
 
 import java.sql.Timestamp;
 import java.util.LinkedHashMap;
 
-/**
- * this controller for the pcap statistics view.
- * Reference: http://gitbook.net/javafx/javafx-statistics.html
- */
-public class PcapStatisticsController {
-
-    @FXML private BarChart pcapBarChart;
+public class StatisticsController {
+    @FXML
+    private BarChart pcapBarChart;
 
     @FXML private PieChart pcapPieChart;
 
@@ -135,5 +129,4 @@ public class PcapStatisticsController {
         Timestamp timestamp = Timestamp.valueOf(packetModel.getTime());
         return timestamp.getTime();
     }
-
 }
