@@ -33,6 +33,20 @@
 
 在网卡下拉栏可以选择网卡，进行选择开启嗅探，或选择打开pcap文件进行分析，也支持保存嗅探得到的数据包。
 
+### Compilation
+
+#### gradle (推荐)
+
+* jar 编译 (推荐)
+
+```bash
+./gradlew shadowJar
+
+# after compilation
+
+java -jar build/libs/JSniffer-1.0-all.jar
+```
+
 ## Features
 
 - 简明的UI
