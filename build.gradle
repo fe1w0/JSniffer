@@ -24,6 +24,11 @@ dependencies {
 }
 
 
+task exportDeps(type: Copy) {
+    from configurations.runtimeClasspath
+    into 'libs'
+}
+
 group 'xyz.xzaslxr'
 version '1.0'
 
